@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Blog Posts | AI Blog Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .blog-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .blog-card:hover {
+            transform: translateX(5px);
+            border-left-color: #667eea;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .empty-state {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen font-sans antialiased">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'index' %}" class="p-2 bg-white rounded-lg hover:bg-gray-100 transition">
+                        <i class="fas fa-arrow-left text-purple-600"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold">My Blog Collection</h1>
+                        <p class="text-sm text-blue-100 opacity-90">All your generated blog posts</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'index' %}" class="flex items-center space-x-2 hover:text-blue-200 transition px-4 py-2 bg-white/10 rounded-lg">
+                        <i class="fas fa-plus"></i>
+                        <span>New Blog</span>
+                    </a>
+                    <div class="relative">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <div class="hidden md:block">
+                                <p class="font-semibold">{{ user.username }}</p>
+                                <p class="text-xs text-blue-100">{{ blog_articles.count }} blogs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Header Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Total Blogs Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Blogs</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ blog_articles.count }}</p>
+                    </div>
+                    <i class="fas fa-file-alt text-3xl text-blue-500"></i>
+                </div>
+            </div>
+            
+            <!-- This Month Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">This Month</p>
+                        <p class="text-3xl font-bold text-gray-800">
+                            {% now "m" as current_month %}
+                            {% with current_month_int=current_month|add:"0" %}
+                                {% with monthly_count=0 %}
+                                    {% for blog in blog_articles %}
+                                        {% if blog.created_at.month == current_month_int %}
+                                            {% with monthly_count=monthly_count|add:1 %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ monthly_count }}
+                                {% endwith %}
+                            {% endwith %}
+                        </p>
+                    </div>
+                    <i class="fas fa-calendar-alt text-3xl text-green-500"></i>
+                </div>
+            </div>
+            
+            <!-- Total Words Card - Simplified -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Words</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalWordsCounter">
+                            <!-- Will be filled by JavaScript -->
+                            0
+                        </p>
+                    </div>
+                    <i class="fas fa-font text-3xl text-purple-500"></i>
+                </div>
+            </div>
+            
+            <!-- Latest Blog Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Latest Blog</p>
+                        <p class="text-lg font-bold text-gray-800 truncate">
+                            {% if blog_articles.first %}
+                                {{ blog_articles.first.youtube_title|truncatechars:20 }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
+                    </div>
+                    <i class="fas fa-history text-3xl text-yellow-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="flex space-x-4">
+                    <button class="filter-btn active px-4 py-2 rounded-lg font-medium transition">All</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition">Recent</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition">Popular</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition">Long Reads</button>
+                </div>
+                
+                <div class="relative w-full md:w-auto">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search blogs..." 
+                               class="pl-12 pr-4 py-3 w-full md:w-96 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <button id="clearSearch" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Posts -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">All Blog Posts</h2>
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-sort"></i>
+                    <select id="sortSelect" class="border-none bg-transparent focus:outline-none">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="title">By Title</option>
+                    </select>
+                </div>
+            </div>
+            
+            {% if blog_articles %}
+                <div id="blogList" class="space-y-4">
+                    {% for blog in blog_articles %}
+                    <div class="blog-card bg-white rounded-xl shadow-lg p-6 cursor-pointer" onclick="window.location.href='{% url 'blog_details' blog.id %}'">
+                        <div class="flex flex-col md:flex-row md:items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ blog.youtube_title }}</h3>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                            <span class="flex items-center">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                {{ blog.created_at|date:"M d, Y" }}
+                                            </span>
+                                            <span class="flex items-center">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                {{ blog.created_at|time:"h:i A" }}
+                                            </span>
+                                            <span class="flex items-center word-count" data-words="{{ blog.generated_content|wordcount }}">
+                                                <i class="fas fa-font mr-1"></i>
+                                                {{ blog.generated_content|wordcount }} words
+                                            </span>
+                                        </div>
+                                        
+                                        <p class="text-gray-600 mb-4 line-clamp-2">
+                                            {{ blog.generated_content|striptags|truncatechars:200 }}
+                                        </p>
+                                        
+                                        <div class="flex flex-wrap gap-2 mb-4">
+                                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                                <i class="fas fa-youtube mr-1"></i> Video Blog
+                                            </span>
+                                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                                                AI Generated
+                                            </span>
+                                            <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                                {{ blog.created_at|timesince }} ago
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="md:ml-4 mt-4 md:mt-0">
+                                        <div class="relative group">
+                                            <button class="p-2 rounded-lg hover:bg-gray-100" onclick="event.stopPropagation();">
+                                                <i class="fas fa-ellipsis-v text-gray-500"></i>
+                                            </button>
+                                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50 hidden group-hover:block">
+                                                <a href="{% url 'blog_details' blog.id %}" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">
+                                                    <i class="fas fa-eye mr-2"></i> View Details
+                                                </a>
+                                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-50" onclick="event.preventDefault();">
+                                                    <i class="fas fa-edit mr-2"></i> Edit
+                                                </a>
+                                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-50" onclick="event.preventDefault();">
+                                                    <i class="fas fa-share-alt mr-2"></i> Share
+                                                </a>
+                                                <div class="border-t my-1"></div>
+                                                <a href="#" class="block px-4 py-2 text-red-600 hover:bg-red-50" onclick="event.preventDefault(); deleteBlog({{ blog.id }});">
+                                                    <i class="fas fa-trash-alt mr-2"></i> Delete
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex items-center space-x-4">
+                                <a href="{{ blog.youtube_link }}" target="_blank" 
+                                   class="flex items-center text-sm text-red-600 hover:text-red-700" onclick="event.stopPropagation();">
+                                    <i class="fab fa-youtube mr-1"></i> Original Video
+                                </a>
+                                <button class="copy-link text-sm text-gray-500 hover:text-gray-700" 
+                                        data-link="{% url 'blog_details' blog.id %}"
+                                        onclick="event.stopPropagation(); copyBlogLink(this);">
+                                    <i class="fas fa-link mr-1"></i> Copy Link
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-500 mr-3">{{ forloop.counter }} of {{ blog_articles.count }}</span>
+                                <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition" onclick="event.stopPropagation(); window.location.href='{% url 'blog_details' blog.id %}';">
+                                    Read Full Blog <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="empty-state rounded-2xl shadow-lg p-12 text-center">
+                    <div class="max-w-md mx-auto">
+                        <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-file-alt text-4xl text-orange-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-3">No Blogs Yet</h3>
+                        <p class="text-gray-600 mb-6">You haven't generated any blog posts yet. Start by converting a YouTube video into a blog post!</p>
+                        <a href="{% url 'index' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition">
+                            <i class="fas fa-plus mr-2"></i> Create Your First Blog
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if blog_articles|length > 5 %}
+        <div class="flex justify-center mt-8">
+            <nav class="flex items-center space-x-2">
+                <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200" id="prevPage">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="w-10 h-10 rounded-lg bg-blue-600 text-white page-btn active" data-page="1">1</button>
+                {% if blog_articles|length > 10 %}
+                <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 page-btn" data-page="2">2</button>
+                <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 page-btn" data-page="3">3</button>
+                <span class="px-2">...</span>
+                <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 page-btn" data-page="10">10</button>
+                {% endif %}
+                <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200" id="nextPage">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </nav>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2024 AI Blog Generator. All generated content is saved to your account.</p>
+            <p class="text-gray-500 text-sm mt-2">
+                <i class="fas fa-database mr-1"></i> {{ blog_articles.count }} blogs stored securely
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Calculate total words
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateTotalWords();
+        });
+
+        function calculateTotalWords() {
+            const wordCountElements = document.querySelectorAll('.word-count');
+            let totalWords = 0;
+            
+            wordCountElements.forEach(element => {
+                const wordCount = parseInt(element.getAttribute('data-words')) || 0;
+                totalWords += wordCount;
+            });
+            
+            document.getElementById('totalWordsCounter').textContent = totalWords.toLocaleString();
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.classList.add('bg-gray-100', 'hover:bg-gray-200');
+                });
+                this.classList.add('active');
+                this.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+                
+                filterBlogs(this.textContent.trim());
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+            
+            const blogCards = document.querySelectorAll('.blog-card');
+            let visibleCount = 0;
+            
+            blogCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const content = card.querySelector('p').textContent.toLowerCase();
+                const date = card.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || content.includes(searchTerm) || date.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show/hide empty state
+            const emptyState = document.querySelector('.empty-state');
+            if (visibleCount === 0 && blogCards.length > 0) {
+                // Show no results message
+                if (!document.getElementById('noResults')) {
+                    const noResults = document.createElement('div');
+                    noResults.id = 'noResults';
+                    noResults.className = 'text-center py-8';
+                    noResults.innerHTML = `
+                        <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">No results found</h3>
+                        <p class="text-gray-500">Try different search terms</p>
+                    `;
+                    document.getElementById('blogList').insertBefore(noResults, document.getElementById('blogList').firstChild);
+                }
+            } else {
+                const noResults = document.getElementById('noResults');
+                if (noResults) {
+                    noResults.remove();
+                }
+            }
+        });
+        
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            this.style.display = 'none';
+            
+            // Show all blogs
+            document.querySelectorAll('.blog-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            
+            // Remove no results message
+            const noResults = document.getElementById('noResults');
+            if (noResults) {
+                noResults.remove();
+            }
+        });
+
+        // Sort functionality
+        document.getElementById('sortSelect').addEventListener('change', function() {
+            const sortBy = this.value;
+            const blogList = document.getElementById('blogList');
+            const blogCards = Array.from(blogList.querySelectorAll('.blog-card'));
+            
+            blogCards.sort((a, b) => {
+                if (sortBy === 'newest') {
+                    const dateA = new Date(a.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent);
+                    const dateB = new Date(b.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent);
+                    return dateB - dateA;
+                } else if (sortBy === 'oldest') {
+                    const dateA = new Date(a.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent);
+                    const dateB = new Date(b.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent);
+                    return dateA - dateB;
+                } else if (sortBy === 'title') {
+                    const titleA = a.querySelector('h3').textContent.toLowerCase();
+                    const titleB = b.querySelector('h3').textContent.toLowerCase();
+                    return titleA.localeCompare(titleB);
+                }
+                return 0;
+            });
+            
+            // Reorder the blog cards
+            blogCards.forEach(card => blogList.appendChild(card));
+        });
+
+        // Copy blog link
+        function copyBlogLink(button) {
+            const blogId = button.getAttribute('data-link').split('/').filter(Boolean).pop();
+            const blogLink = window.location.origin + button.getAttribute('data-link');
+            
+            navigator.clipboard.writeText(blogLink).then(() => {
+                showNotification('Blog link copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('Failed to copy link', 'error');
+            });
+        }
+
+        // Delete blog function
+        function deleteBlog(blogId) {
+            if (confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
+                // In a real app, you would make an API call to delete the blog
+                fetch(`/blog/${blogId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showNotification('Blog deleted successfully!', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showNotification('Failed to delete blog', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Network error. Please try again.', 'error');
+                });
+            }
+        }
+
+        // Filter blogs function
+        function filterBlogs(filter) {
+            const blogCards = document.querySelectorAll('.blog-card');
+            
+            blogCards.forEach(card => {
+                const wordsElement = card.querySelector('.word-count');
+                const wordCount = parseInt(wordsElement.getAttribute('data-words')) || 0;
+                
+                let showCard = true;
+                
+                switch(filter.toLowerCase()) {
+                    case 'recent':
+                        // Show blogs from last 7 days
+                        const dateText = card.querySelector('[class*="fa-calendar-alt"]').parentElement.textContent;
+                        const blogDate = new Date(dateText);
+                        const weekAgo = new Date();
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        showCard = blogDate >= weekAgo;
+                        break;
+                        
+                    case 'long reads':
+                        // Show blogs with more than 500 words
+                        showCard = wordCount > 500;
+                        break;
+                        
+                    case 'popular':
+                        // This would require likes/views data
+                        showCard = true; // Placeholder
+                        break;
+                        
+                    default: // 'all'
+                        showCard = true;
+                }
+                
+                card.style.display = showCard ? 'block' : 'none';
+            });
+            
+            // Update visible count
+            updateVisibleCount();
+        }
+
+        // Update visible blog count
+        function updateVisibleCount() {
+            const visibleCards = document.querySelectorAll('.blog-card[style="display: block"]');
+            const counterElements = document.querySelectorAll('.blog-card .text-sm.text-gray-500.mr-3');
+            
+            counterElements.forEach((element, index) => {
+                element.textContent = `${index + 1} of ${visibleCards.length}`;
+            });
+        }
+
+        // Pagination
+        const pageSize = 5;
+        let currentPage = 1;
+        
+        document.querySelectorAll('.page-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPage = parseInt(this.getAttribute('data-page'));
+                paginateBlogs(currentPage);
+            });
+        });
+        
+        function paginateBlogs(page) {
+            const blogCards = document.querySelectorAll('.blog-card');
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            
+            blogCards.forEach((card, index) => {
+                if (index >= startIndex && index < endIndex) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize pagination if needed
+        if (document.querySelector('.page-btn')) {
+            paginateBlogs(1);
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            // Remove existing notifications
+            document.querySelectorAll('.custom-notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `custom-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Utility function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

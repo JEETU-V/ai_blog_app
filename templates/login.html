@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI Blog Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-group input:focus ~ .input-icon {
+            color: #667eea;
+        }
+        
+        .floating-label {
+            position: absolute;
+            top: 50%;
+            left: 3rem;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .input-group input:focus ~ .floating-label,
+        .input-group input:not(:placeholder-shown) ~ .floating-label {
+            top: -10px;
+            left: 0.75rem;
+            font-size: 0.75rem;
+            color: #667eea;
+            background: white;
+            padding: 0 0.5rem;
+        }
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 font-sans antialiased">
+    <!-- Background Animation -->
+    <div id="particles"></div>
+    
+    <!-- Main Content -->
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full max-w-6xl">
+            <!-- Left Side - Brand & Info -->
+            <div class="flex flex-col justify-center">
+                <div class="text-center lg:text-left">
+                    <div class="flex items-center justify-center lg:justify-start space-x-3 mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center animate-float">
+                            <i class="fas fa-robot text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-gray-900">AI Blog Generator</h1>
+                            <p class="text-lg text-gray-600 mt-2">Transform videos into blogs instantly</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6 mb-12">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-bolt text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Instant Processing</h3>
+                                <p class="text-gray-600 text-sm">Generate blogs from YouTube videos in seconds</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-magic text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">AI-Powered Content</h3>
+                                <p class="text-gray-600 text-sm">Advanced AI creates engaging, well-structured blogs</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-save text-purple-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Auto-Save & History</h3>
+                                <p class="text-gray-600 text-sm">All your generated blogs saved automatically</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Testimonials -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-center mb-4">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <span class="ml-2 text-gray-600">4.9/5 from 500+ users</span>
+                        </div>
+                        <p class="text-gray-700 italic">"This tool saved me hours of work. The AI-generated blogs are surprisingly high-quality!"</p>
+                        <p class="text-gray-600 text-sm mt-2">- Sarah Johnson, Content Creator</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side - Login Form -->
+            <div class="flex items-center justify-center">
+                <div class="login-card w-full max-w-md rounded-3xl shadow-2xl p-8">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-gray-900">Welcome Back</h2>
+                        <p class="text-gray-600 mt-2">Sign in to your account</p>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    {% if error_message %}
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+                            <div>
+                                <p class="font-medium text-red-800">Login Failed</p>
+                                <p class="text-red-600 text-sm mt-1">{{ error_message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Login Form -->
+                    <form class="space-y-6" action="" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="input-group">
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <i class="fas fa-user input-icon text-gray-400"></i>
+                                </div>
+                                <input type="text" id="username" name="username" placeholder=" " 
+                                       class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                                       required>
+                                <label for="username" class="floating-label">Username or Email</label>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <i class="fas fa-lock input-icon text-gray-400"></i>
+                                </div>
+                                <input type="password" id="password" name="password" placeholder=" "
+                                       class="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                                       required>
+                                <label for="password" class="floating-label">Password</label>
+                                <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                            </label>
+                            <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+                        </button>
+                        
+                        <div class="relative my-8">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-4 bg-white text-gray-500">Or continue with</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" class="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition">
+                                <i class="fab fa-google text-red-600"></i>
+                                <span class="text-gray-700">Google</span>
+                            </button>
+                            <button type="button" class="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition">
+                                <i class="fab fa-github text-gray-800"></i>
+                                <span class="text-gray-700">GitHub</span>
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-8">
+                            <p class="text-gray-600">Don't have an account?
+                                <a href="{% url 'signup' %}" class="text-blue-600 hover:text-blue-800 font-semibold ml-1">
+                                    Sign up for free
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                    
+                    <!-- Quick Demo -->
+                    <div class="mt-8 pt-8 border-t border-gray-200">
+                        <div class="text-center">
+                            <p class="text-sm text-gray-500 mb-3">Want to try it first?</p>
+                            <button id="demoLogin" class="text-sm text-purple-600 hover:text-purple-800 font-medium">
+                                <i class="fas fa-play-circle mr-1"></i> Try Demo Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="absolute bottom-0 w-full py-4 text-center">
+        <p class="text-gray-600 text-sm">© 2024 AI Blog Generator. All rights reserved.</p>
+        <p class="text-gray-500 text-xs mt-1">Secure login powered by Django</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // Demo login
+        document.getElementById('demoLogin').addEventListener('click', function() {
+            document.getElementById('username').value = 'demo_user';
+            document.getElementById('password').value = 'demo123';
+            showNotification('Demo credentials filled! Click Sign In to continue.', 'info');
+        });
+
+        // Create background particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size
+                const size = Math.random() * 20 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 100}vh`;
+                
+                // Random animation
+                const duration = Math.random() * 20 + 10;
+                const delay = Math.random() * 5;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize particles on page load
+        document.addEventListener('DOMContentLoaded', createParticles);
+    </script>
+</body>
+</html>
