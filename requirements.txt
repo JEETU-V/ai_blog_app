@@ -1,0 +1,37 @@
+# Core Django
+Django==5.2.7
+django-cors-headers==4.4.0
+django-environ==0.11.2
+
+# Database
+psycopg2-binary==2.9.9  # For PostgreSQL
+# or use SQLite (comes with Python)
+
+# AI & Video Processing
+assemblyai==0.19.1
+yt-dlp==2024.11.11
+pydub==0.25.1
+
+# Audio Processing
+ffmpeg-python==0.2.0
+
+# HTTP Requests
+requests==2.31.0
+urllib3==2.2.2
+
+# JSON & Data Processing
+python-dotenv==1.0.0
+
+# Production
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Development
+pytest==8.2.0
+pytest-django==4.8.0
+pytest-cov==5.0.0
+
+# Code Quality
+black==24.10.0
+flake8==7.1.1
+isort==5.13.2
